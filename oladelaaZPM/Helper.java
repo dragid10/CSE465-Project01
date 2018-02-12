@@ -93,9 +93,16 @@ public class Helper {
                     runPrintVariableValue(variableName);
                     break;
                 case "FOR":
-                    String[] minifiedLineParts = new String[lineParts.length - 1];
-                    System.arraycopy(lineParts, 1, minifiedLineParts, 0, lineParts.length - 2);
-                    runForLoop(minifiedLineParts);
+                    String[] minifiedLineParts = new String[lineParts.length - 3];
+                    int numOfTimesToLoop = 0;
+                    try {
+                        numOfTimesToLoop = Integer.parseInt(lineParts[1]);
+                    } catch (NumberFormatException e) {
+                        System.err.println("RUNTIME ERROR: Invalid FOR-LOOP syntax on line: " + lineNumber);
+                        System.exit(400);
+                    }
+                    System.arraycopy(lineParts, 2, minifiedLineParts, 0, lineParts.length - 3);
+                    runForLoop(minifiedLineParts, numOfTimesToLoop);
                     break;
             }
         } else {
@@ -107,22 +114,32 @@ public class Helper {
     /**
      * Method for parsing and executing the a FOR-loop statement
      *
-     * @param lineParts The statements to execute for the for-loop
+     * @param lineParts        The statements to execute for the for-loop
+     * @param numOfTimesToLoop The number of times to execute the given set of statements
      */
-    private void runForLoop(String[] lineParts) {
+    private void runForLoop(String[] lineParts, int numOfTimesToLoop) {
 //           Checks to see if we have a nested for-loop
         String startOfFirstCommand = lineParts[0];
         if (startOfFirstCommand.equals("FOR")) { // Is a nested FOR-loop
-//           Remove the FOR and ENDFOR keywords from the array
-            String[] minifiedLineParts = new String[lineParts.length - 1];
-            System.arraycopy(lineParts, 1, minifiedLineParts, 0, lineParts.length - 2);
+//           Attempts to
+            String[] minifiedLineParts = new String[lineParts.length - 3];
+            int numLoops = 0;
+            try {
+                numLoops = Integer.parseInt(lineParts[1]);
+            } catch (NumberFormatException e) {
+                System.err.println("RUNTIME ERROR: Invalid FOR-LOOP syntax on line: " + lineNumber);
+                System.exit(400);
+            }
+            System.arraycopy(lineParts, 2, minifiedLineParts, 0, lineParts.length - 3);
+            runForLoop(minifiedLineParts, numLoops);
         } else { // It's a command
-//            Each command is going to be an assignment of some way so we store them in a string array
+
+//            Each command is going to be an assignment of some way so we store the line to execute in a string array
             int numOfCommands = lineParts.length / 3;
             String[] commandsToExecute = new String[numOfCommands];
 
             int j = 0;
-            String variableToWriteTo = null, assignmentOperator = null, valueToWriteWith = null;
+            String variableToWriteTo, assignmentOperator, valueToWriteWith;
             for (int i = 0; i < lineParts.length; i += 3) {
                 variableToWriteTo = lineParts[i];
                 assignmentOperator = lineParts[i + 1];
@@ -131,8 +148,13 @@ public class Helper {
                         valueToWriteWith.trim());
                 j++;
             }
+//            Pass each line through the line parser to be parsed
+            for (int i = 0; i < numOfTimesToLoop; i++) {
+                for (String line : commandsToExecute) {
+                    parseProgramLine(line + " ;");
+                }
+            }
         }
-        int numOfCommands = lineParts.length / 3;
     }
 
     /**
