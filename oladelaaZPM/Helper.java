@@ -82,25 +82,57 @@ public class Helper {
         programLine = programLine.replace(";", "").trim();
 
 //        Sends the line to a specified method depending on what its action is
-        String[] lineParts = programLine.split(" ");
+//        String[] lineParts = programLine.trim().split(" "); todo - Decide on whether to keep this or not
+        String[] lineParts = programLine.trim().split("\\s+");
         String actionToTake = lineParts[0];
 
         if (RESERVED_WORDS.contains(actionToTake)) {
             String variableName = lineParts[1];
             switch (actionToTake) {
                 case "PRINT":
-                    printVariableValue(variableName);
+                    runPrintVariableValue(variableName);
                     break;
                 case "FOR":
-
+                    String[] minifiedLineParts = new String[lineParts.length - 1];
+                    System.arraycopy(lineParts, 1, minifiedLineParts, 0, lineParts.length - 2);
+                    runForLoop(minifiedLineParts);
                     break;
             }
         } else {
 //            Send new array of just the variable components to a parsing method
-//            String[] variableParseList = new String[lineParts.length - 1];
-//            System.arraycopy(lineParts, 1, variableParseList, 0, lineParts.length - 1);
             parseVariable(lineParts);
         }
+    }
+
+    /**
+     * Method for parsing and executing the a FOR-loop statement
+     *
+     * @param lineParts The statements to execute for the for-loop
+     */
+    private void runForLoop(String[] lineParts) {
+//           Checks to see if we have a nested for-loop
+        String startOfFirstCommand = lineParts[0];
+        if (startOfFirstCommand.equals("FOR")) { // Is a nested FOR-loop
+//           Remove the FOR and ENDFOR keywords from the array
+            String[] minifiedLineParts = new String[lineParts.length - 1];
+            System.arraycopy(lineParts, 1, minifiedLineParts, 0, lineParts.length - 2);
+        } else { // It's a command
+//            Each command is going to be an assignment of some way so we store them in a string array
+            int numOfCommands = lineParts.length / 3;
+            String[] commandsToExecute = new String[numOfCommands];
+
+            int j = 0;
+            String variableToWriteTo = null, assignmentOperator = null, valueToWriteWith = null;
+            for (int i = 0; i < lineParts.length; i += 3) {
+                variableToWriteTo = lineParts[i];
+                assignmentOperator = lineParts[i + 1];
+                valueToWriteWith = lineParts[i + 2];
+                commandsToExecute[j] = String.format("%s %s %s", variableToWriteTo.trim(), assignmentOperator.trim(),
+                        valueToWriteWith.trim());
+                j++;
+            }
+        }
+        int numOfCommands = lineParts.length / 3;
     }
 
     /**
@@ -108,7 +140,7 @@ public class Helper {
      *
      * @param variableName Variable whose value will be printed to the console
      */
-    private void printVariableValue(String variableName) {
+    private void runPrintVariableValue(String variableName) {
         if (INTEGER_VARIABLE_TABLE.containsKey(variableName)) { // Variable is an int
             System.out.println(variableName + " = " + INTEGER_VARIABLE_TABLE.get(variableName));
         } else if (STRING_VARIABLE_TABLE.containsKey(variableName)) { // Variable is an int
@@ -144,13 +176,6 @@ public class Helper {
      */
     private void assignVariable(String key, String value, String operator) {
         try {
-//        Try to parse value to see if its a number, then see if it has already been declared
-//        If it hasn't been declared already, throw a runtime error
-/*            if (!INTEGER_VARIABLE_TABLE.containsKey(key)) {
-                System.err.println("RUNTIME ERROR: Cannot find symbol '" + key + "' on line " + lineNumber);
-                System.exit(404);
-            }*/
-
 //          Gets the number we want to operate with and the number already stored for the variable
             int parsedValue = Integer.parseInt(value);
             int currentMapValue = INTEGER_VARIABLE_TABLE.get(key);
