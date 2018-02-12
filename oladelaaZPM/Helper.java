@@ -112,7 +112,7 @@ public class Helper {
         String variableValue = variableList[2];
 
         if (RESERVED_SYMBOLS.contains(operator)) { // Checks if the operator is a reserved symbol for special parsing
-            specialAssignVariable(variableName, variableValue, operator);
+            assignVariable(variableName, variableValue, operator);
 
         } else { // More likely a variable deceleration or type change
             assignVariable(variableName, variableValue);
@@ -124,8 +124,60 @@ public class Helper {
      * @param value    Value of the variable
      * @param operator Determines how value is set
      */
-    private void specialAssignVariable(String key, String value, String operator) {
+    private void assignVariable(String key, String value, String operator) {
+        try {
+//        Try to parse value to see if its a number, then see if it has already been declared
+//        If it hasn't been declared already, throw a runtime error
+            if (!INTEGER_VARIABLE_TABLE.containsKey(key)) {
+                System.err.println("Cannot find symbol: " + key);
+                System.exit(400);
+            }
 
+//          Gets the number we want to operate with and the number already stored for the variable
+            int parsedValue = Integer.parseInt(value);
+            int currentMapValue = INTEGER_VARIABLE_TABLE.get(key);
+
+//            Sends the two numbers through the method to apply the operator and return for storage in variables HashMap
+            int valueToStore = applyOperator(currentMapValue, parsedValue, operator);
+            INTEGER_VARIABLE_TABLE.put(key, valueToStore);
+        } catch (NumberFormatException e) {
+            if (value.contains("\"")) { // Hit this if the value is actually a string literal
+
+//          Checks to see if it has already been declared in order to apply the operation
+                if (!STRING_VARIABLE_TABLE.containsKey(key)) {
+                    System.err.println("Cannot find symbol: " + key);
+                    System.exit(400);
+                }
+
+//          Gets the String that's currently saved in the variables HashMap
+//          Cleans current value to get rid of quotation marks applies operator, and stores new value
+                String currentMapValue = STRING_VARIABLE_TABLE.get(key);
+                value = value.replace("\"", "").trim();
+                String valueToStore = applyOperator(currentMapValue, value, operator);
+                STRING_VARIABLE_TABLE.put(key, valueToStore);
+            } else { // We know that the value is instead another variable
+
+//                Checks to see if the variable is a string or an int
+                if (STRING_VARIABLE_TABLE.containsKey(value)) { // It's a String
+//                    Applies operator and stores in string HashMap
+                    String currentlyStoredKeyString = STRING_VARIABLE_TABLE.get(key);
+                    String currentlyStoredValueString = STRING_VARIABLE_TABLE.get(value);
+                    String valToStore = applyOperator(currentlyStoredKeyString, currentlyStoredValueString, operator);
+                    STRING_VARIABLE_TABLE.put(key, valToStore);
+                } else if (INTEGER_VARIABLE_TABLE.containsKey(value)) { //It's an Int
+
+//                    Applies operator and stores in int HashMap
+                    int currentlyStoredInt = INTEGER_VARIABLE_TABLE.get(key);
+                    int currentlyStoredValueInt = INTEGER_VARIABLE_TABLE.get(value);
+                    int valToStore = applyOperator(currentlyStoredInt, currentlyStoredValueInt, operator);
+                    INTEGER_VARIABLE_TABLE.put(key, valToStore);
+                } else { // It hasn't been declared before
+
+                    System.err.println("Cannot find symbol: " + value);
+                    System.exit(400);
+                }
+            }
+        }
     }
 
     /**
@@ -137,7 +189,7 @@ public class Helper {
     private void assignVariable(String key, String value) {
         try {
 //        Try to parse value to see if its a number, then see if it was a string before.
-//        If it was a string before, then we remove it from the string hashmap because it's now an int
+//        If it was a string before, then we remove it from the string HashMap because it's now an int
             int actualVal = Integer.parseInt(value);
             if (STRING_VARIABLE_TABLE.containsKey(key)) {
                 STRING_VARIABLE_TABLE.remove(key);
@@ -145,12 +197,12 @@ public class Helper {
             INTEGER_VARIABLE_TABLE.put(key, actualVal);
         } catch (NumberFormatException e) {
 //          Means that the value is not a number, but instead a string
-//          Checks to see if it was in the int hashmap before, and if so then delete it b/c its now a string
+//          Checks to see if it was in the int HashMap before, and if so then delete it b/c its now a string
             if (INTEGER_VARIABLE_TABLE.containsKey(key)) {
                 INTEGER_VARIABLE_TABLE.remove(key);
             }
 
-            if (value.contains("\"")) { // If the value is a string literal, then clean it up & add to the hashmap
+            if (value.contains("\"")) { // If the value is a string literal, then clean it up & add to the HashMap
                 value = value.replace("\"", "").trim();
                 STRING_VARIABLE_TABLE.put(key, value);
             } else { // If not a string literal, then it refers to another variable
@@ -164,6 +216,50 @@ public class Helper {
                 }
             }
         }
+    }
+
+    /**
+     * @param newValue    Number to be applied to the value already stored in HashMap
+     * @param storedValue Number currently stored in HashMap
+     * @param operator    Operator to apply to storedValue and newValue (e.g. storedValue *= newValue)
+     * @return int New value to store in the variables HashMap
+     */
+    private int applyOperator(int storedValue, int newValue, String operator) {
+        switch (operator) {
+            case "+=":
+                storedValue += newValue;
+                break;
+            case "-=":
+                storedValue -= newValue;
+                break;
+            case "*=":
+                storedValue *= newValue;
+                break;
+            default:
+                System.err.println("Illegal character: " + operator);
+                System.exit(400);
+                break;
+        }
+        return storedValue;
+    }
+
+    /**
+     * @param newValue    String to be applied to the value already stored in HashMap
+     * @param storedValue String currently stored in HashMap
+     * @param operator    Operator to apply to storedValue and newValue (e.g. storedValue *= newValue)
+     * @return int New value to store in the variables HashMap
+     */
+    private String applyOperator(String storedValue, String newValue, String operator) {
+        switch (operator) {
+            case "+=":
+                storedValue += newValue;
+                break;
+            default:
+                System.err.println("Illegal character: " + operator);
+                System.exit(400);
+                break;
+        }
+        return storedValue;
     }
 
     /**
