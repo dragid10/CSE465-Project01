@@ -80,9 +80,6 @@ public class Helper {
 
 //        Replaces all semi-colons with a space before the split, b/c it's unneeded
         programLine = programLine.replace(";", "").trim();
-
-//        Sends the line to a specified method depending on what its action is
-//        String[] lineParts = programLine.trim().split(" "); todo - Decide on whether to keep this or not
         String[] lineParts = programLine.trim().split("\\s+");
         String actionToTake = lineParts[0];
 
@@ -121,7 +118,7 @@ public class Helper {
 //           Checks to see if we have a nested for-loop
         String startOfFirstCommand = lineParts[0];
         if (startOfFirstCommand.equals("FOR")) { // Is a nested FOR-loop
-//           Attempts to
+//           Recursively call the lines in the nested loop
             String[] minifiedLineParts = new String[lineParts.length - 3];
             int numLoops = 0;
             try {
@@ -132,7 +129,7 @@ public class Helper {
             }
             System.arraycopy(lineParts, 2, minifiedLineParts, 0, lineParts.length - 3);
             runForLoop(minifiedLineParts, numLoops);
-        } else { // It's a command
+        } else { // It's a command instead of a for-loop
 
 //            Each command is going to be an assignment of some way so we store the line to execute in a string array
             int numOfCommands = lineParts.length / 3;
