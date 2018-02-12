@@ -59,7 +59,7 @@ public class Helper {
         } catch (IOException e) { // Thrown if there was a problem reading a line for some reason
             System.err.println("Something went wrong while trying to read the file!");
             e.printStackTrace();
-            System.exit(420);
+            System.exit(500);
         }
     }
 
@@ -71,12 +71,14 @@ public class Helper {
      */
     private void parseProgramLine(String programLine) {
 //        Checks to see if the line ends with either a "ENDFOR" keyword or a semi-colon
-        if (!endsWithSemicolon(programLine) || !endsForLoop(programLine)) {
-            System.err.println("Missing Semi-colon on line: " + lineNumber);
-            System.exit(400);
+        if (!endsWithSemicolon(programLine)) {
+            if (!endsForLoop(programLine)) {
+                System.err.println("Missing Semi-colon on line: " + lineNumber);
+                System.exit(400);
+            }
         }
 
-//        Replaces all semi-colons with a space before the spplit, b/c it's uneeded
+//        Replaces all semi-colons with a space before the split, b/c it's unneeded
         programLine = programLine.replace(";", "").trim();
 
 //        Sends the line to a specified method depending on what its action is
@@ -84,10 +86,10 @@ public class Helper {
         String actionToTake = lineParts[0];
 
         if (RESERVED_WORDS.contains(actionToTake)) {
-            // TODO: 2/11/2018 Actually Implement this
+            String variableName = lineParts[1];
             switch (actionToTake) {
                 case "PRINT":
-                    double hello = 0;
+                    printVariableValue(variableName);
                     break;
                 case "FOR":
 
@@ -95,9 +97,25 @@ public class Helper {
             }
         } else {
 //            Send new array of just the variable components to a parsing method
-            String[] variableParseList = new String[lineParts.length - 1];
-            System.arraycopy(lineParts, 1, variableParseList, 0, lineParts.length - 1);
-            parseVariable(variableParseList);
+//            String[] variableParseList = new String[lineParts.length - 1];
+//            System.arraycopy(lineParts, 1, variableParseList, 0, lineParts.length - 1);
+            parseVariable(lineParts);
+        }
+    }
+
+    /**
+     * Prints value of passed in variable to the console
+     *
+     * @param variableName Variable whose value will be printed to the console
+     */
+    private void printVariableValue(String variableName) {
+        if (INTEGER_VARIABLE_TABLE.containsKey(variableName)) { // Variable is an int
+            System.out.println(INTEGER_VARIABLE_TABLE.get(variableName));
+        } else if (STRING_VARIABLE_TABLE.containsKey(variableName)) { // Variable is an int
+            System.out.println(STRING_VARIABLE_TABLE.get(variableName));
+        } else { // Variable has not been previously declared
+            System.err.println("Cannot find symbol: " + variableName);
+            System.exit(404);
         }
     }
 
@@ -130,7 +148,7 @@ public class Helper {
 //        If it hasn't been declared already, throw a runtime error
             if (!INTEGER_VARIABLE_TABLE.containsKey(key)) {
                 System.err.println("Cannot find symbol: " + key);
-                System.exit(400);
+                System.exit(404);
             }
 
 //          Gets the number we want to operate with and the number already stored for the variable
@@ -146,7 +164,7 @@ public class Helper {
 //          Checks to see if it has already been declared in order to apply the operation
                 if (!STRING_VARIABLE_TABLE.containsKey(key)) {
                     System.err.println("Cannot find symbol: " + key);
-                    System.exit(400);
+                    System.exit(404);
                 }
 
 //          Gets the String that's currently saved in the variables HashMap
@@ -173,8 +191,8 @@ public class Helper {
                     INTEGER_VARIABLE_TABLE.put(key, valToStore);
                 } else { // It hasn't been declared before
 
-                    System.err.println("Cannot find symbol: " + value);
-                    System.exit(400);
+                    System.err.println("Cannot find symbol '" + value + "' on line " + lineNumber);
+                    System.exit(404);
                 }
             }
         }
@@ -198,21 +216,21 @@ public class Helper {
         } catch (NumberFormatException e) {
 //          Means that the value is not a number, but instead a string
 //          Checks to see if it was in the int HashMap before, and if so then delete it b/c its now a string
-            if (INTEGER_VARIABLE_TABLE.containsKey(key)) {
+/*            if (INTEGER_VARIABLE_TABLE.containsKey(key)) {
                 INTEGER_VARIABLE_TABLE.remove(key);
-            }
+            }*/
 
             if (value.contains("\"")) { // If the value is a string literal, then clean it up & add to the HashMap
                 value = value.replace("\"", "").trim();
                 STRING_VARIABLE_TABLE.put(key, value);
             } else { // If not a string literal, then it refers to another variable
-                if (INTEGER_VARIABLE_TABLE.containsKey(value)) {
+                if (INTEGER_VARIABLE_TABLE.containsKey(value) && !STRING_VARIABLE_TABLE.containsKey(value)) {
                     INTEGER_VARIABLE_TABLE.put(key, INTEGER_VARIABLE_TABLE.get(value));
-                } else if (STRING_VARIABLE_TABLE.containsKey(value)) {
+                } else if (STRING_VARIABLE_TABLE.containsKey(value) && !INTEGER_VARIABLE_TABLE.containsKey(value)) {
                     STRING_VARIABLE_TABLE.put(key, STRING_VARIABLE_TABLE.get(value));
                 } else { // If the variable hasn't been  declared, then throw a runtime error
-                    System.err.println("Cannot find symbol: " + value);
-                    System.exit(400);
+                    System.err.println("Cannot find symbol '" + value + "' on line " + lineNumber);
+                    System.exit(404);
                 }
             }
         }
