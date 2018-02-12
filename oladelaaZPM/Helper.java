@@ -53,11 +53,11 @@ public class Helper {
 //            Closes buffered reader because we're done with it
             in.close();
         } catch (FileNotFoundException e) { // Thrown if the file doesn't actually exist
-            System.err.println("The file passed in does not exist!");
+            System.err.println("RUNTIME ERROR: The file passed in does not exist!");
             e.printStackTrace();
             System.exit(404);
         } catch (IOException e) { // Thrown if there was a problem reading a line for some reason
-            System.err.println("Something went wrong while trying to read the file!");
+            System.err.println("RUNTIME ERROR: Something went wrong while trying to read the file!");
             e.printStackTrace();
             System.exit(500);
         }
@@ -73,7 +73,7 @@ public class Helper {
 //        Checks to see if the line ends with either a "ENDFOR" keyword or a semi-colon
         if (!endsWithSemicolon(programLine)) {
             if (!endsForLoop(programLine)) {
-                System.err.println("Missing Semi-colon on line: " + lineNumber);
+                System.err.println("RUNTIME ERROR: Missing Semi-colon on line: " + lineNumber);
                 System.exit(400);
             }
         }
@@ -110,11 +110,11 @@ public class Helper {
      */
     private void printVariableValue(String variableName) {
         if (INTEGER_VARIABLE_TABLE.containsKey(variableName)) { // Variable is an int
-            System.out.println(INTEGER_VARIABLE_TABLE.get(variableName));
+            System.out.println(variableName + " = " + INTEGER_VARIABLE_TABLE.get(variableName));
         } else if (STRING_VARIABLE_TABLE.containsKey(variableName)) { // Variable is an int
-            System.out.println(STRING_VARIABLE_TABLE.get(variableName));
+            System.out.println(variableName + " = " + STRING_VARIABLE_TABLE.get(variableName));
         } else { // Variable has not been previously declared
-            System.err.println("Cannot find symbol: " + variableName);
+            System.err.println("RUNTIME ERROR: Cannot find symbol '" + variableName + "' on line " + lineNumber);
             System.exit(404);
         }
     }
@@ -146,10 +146,10 @@ public class Helper {
         try {
 //        Try to parse value to see if its a number, then see if it has already been declared
 //        If it hasn't been declared already, throw a runtime error
-            if (!INTEGER_VARIABLE_TABLE.containsKey(key)) {
-                System.err.println("Cannot find symbol: " + key);
+/*            if (!INTEGER_VARIABLE_TABLE.containsKey(key)) {
+                System.err.println("RUNTIME ERROR: Cannot find symbol '" + key + "' on line " + lineNumber);
                 System.exit(404);
-            }
+            }*/
 
 //          Gets the number we want to operate with and the number already stored for the variable
             int parsedValue = Integer.parseInt(value);
@@ -163,7 +163,7 @@ public class Helper {
 
 //          Checks to see if it has already been declared in order to apply the operation
                 if (!STRING_VARIABLE_TABLE.containsKey(key)) {
-                    System.err.println("Cannot find symbol: " + key);
+                    System.err.println("RUNTIME ERROR: RUNTIME ERROR: Cannot find symbol '" + key + "' on line " + lineNumber);
                     System.exit(404);
                 }
 
@@ -191,7 +191,7 @@ public class Helper {
                     INTEGER_VARIABLE_TABLE.put(key, valToStore);
                 } else { // It hasn't been declared before
 
-                    System.err.println("Cannot find symbol '" + value + "' on line " + lineNumber);
+                    System.err.println("RUNTIME ERROR: Cannot find symbol '" + value + "' on line " + lineNumber);
                     System.exit(404);
                 }
             }
@@ -215,21 +215,17 @@ public class Helper {
             INTEGER_VARIABLE_TABLE.put(key, actualVal);
         } catch (NumberFormatException e) {
 //          Means that the value is not a number, but instead a string
-//          Checks to see if it was in the int HashMap before, and if so then delete it b/c its now a string
-/*            if (INTEGER_VARIABLE_TABLE.containsKey(key)) {
-                INTEGER_VARIABLE_TABLE.remove(key);
-            }*/
-
             if (value.contains("\"")) { // If the value is a string literal, then clean it up & add to the HashMap
                 value = value.replace("\"", "").trim();
                 STRING_VARIABLE_TABLE.put(key, value);
+                INTEGER_VARIABLE_TABLE.remove(key);
             } else { // If not a string literal, then it refers to another variable
                 if (INTEGER_VARIABLE_TABLE.containsKey(value) && !STRING_VARIABLE_TABLE.containsKey(value)) {
                     INTEGER_VARIABLE_TABLE.put(key, INTEGER_VARIABLE_TABLE.get(value));
                 } else if (STRING_VARIABLE_TABLE.containsKey(value) && !INTEGER_VARIABLE_TABLE.containsKey(value)) {
                     STRING_VARIABLE_TABLE.put(key, STRING_VARIABLE_TABLE.get(value));
                 } else { // If the variable hasn't been  declared, then throw a runtime error
-                    System.err.println("Cannot find symbol '" + value + "' on line " + lineNumber);
+                    System.err.println("RUNTIME ERROR: Cannot find symbol '" + value + "' on line " + lineNumber);
                     System.exit(404);
                 }
             }
@@ -254,7 +250,7 @@ public class Helper {
                 storedValue *= newValue;
                 break;
             default:
-                System.err.println("Illegal character: " + operator);
+                System.err.println("RUNTIME ERROR: Illegal character: " + operator);
                 System.exit(400);
                 break;
         }
@@ -273,7 +269,7 @@ public class Helper {
                 storedValue += newValue;
                 break;
             default:
-                System.err.println("Illegal character: " + operator);
+                System.err.println("RUNTIME ERROR: Illegal character: " + operator);
                 System.exit(400);
                 break;
         }
